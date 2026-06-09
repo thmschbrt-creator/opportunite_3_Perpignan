@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mabuhay Cuisine &middot; 5 Pl. Gr&eacute;try, Perpignan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  --noir:#0d0d0b;--creme:#f5f0e8;--or:#b8964a;--or-clair:#d4af6a;
+  --pierre:#8a7e6e;--brique:#c4533a;--vert:#2e6b4f;
+  --texte:#2a2520;--texte-doux:#6b5f52;--fond:#faf7f2;
+  --blanc:#ffffff;--sep:rgba(184,150,74,0.22);
+  --rouge:#c0392b;--orange:#e67e22;--bleu:#2980b9;--vert-ok:#27ae60;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--fond);color:var(--texte);font-size:14px;line-height:1.6;}
+
+.hero{background:var(--noir);color:var(--creme);padding:2.5rem 2rem 2rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 15% 50%,rgba(196,83,58,0.10) 0%,transparent 60%);}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--or),var(--or-clair),transparent);}
+.hero-inner{position:relative;max-width:960px;margin:0 auto;}
+.hero-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--or);margin-bottom:.7rem;}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;line-height:1.1;margin-bottom:.3rem;}
+.hero-title em{font-style:italic;color:var(--or-clair);}
+.hero-adresse{font-size:.85rem;color:rgba(245,240,232,0.55);margin-bottom:1.8rem;}
+.hero-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;}
+.kpi{border-left:1px solid rgba(184,150,74,0.3);padding-left:1rem;}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:400;color:var(--or-clair);line-height:1;}
+.kpi-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,240,232,0.45);margin-top:.3rem;}
+
+.wrap{max-width:960px;margin:0 auto;padding:2.5rem 1.5rem;}
+.section{margin-bottom:3rem;}
+.section-hd{display:flex;align-items:baseline;gap:.8rem;margin-bottom:1.4rem;padding-bottom:.7rem;border-bottom:1px solid var(--sep);}
+.section-num{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--or);}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:400;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;}
+
+/* SIMULATEUR */
+.sim-card{background:var(--blanc);border:1px solid var(--sep);border-radius:3px;padding:1.8rem;}
+.sim-row{display:flex;align-items:center;gap:1rem;margin-bottom:.9rem;}
+.sim-row-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--pierre);width:130px;flex-shrink:0;}
+input[type=range]{flex:1;accent-color:var(--or);height:4px;}
+.sim-row-val{font-family:'DM Mono',monospace;font-size:.85rem;color:var(--or);width:65px;text-align:right;}
+.sim-prix-line{font-family:'Cormorant Garamond',serif;font-size:1.5rem;text-align:center;padding:.9rem;background:rgba(184,150,74,0.06);border:1px solid var(--sep);border-radius:3px;margin:1.2rem 0;}
+.sim-prix-line span{color:var(--or);}
+.sim-results{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1rem;}
+.sim-res{text-align:center;padding:.9rem .5rem;background:var(--fond);border-radius:3px;}
+.sim-res-val{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--or);}
+.sim-res-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--pierre);margin-top:.2rem;}
+
+/* PROJECTIONS */
+.proj-dark{background:rgba(13,13,11,0.97);border-radius:4px;padding:2rem;color:var(--creme);}
+.proj-dark .section-hd{border-bottom-color:rgba(184,150,74,0.15);}
+.proj-dark .section-num{color:var(--or);}
+.proj-dark .section-title{color:var(--creme);}
+
+.cfb-block{background:rgba(255,255,255,0.04);border:1px solid rgba(184,150,74,0.15);border-radius:3px;padding:1.2rem;}
+.cfb-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--or);margin-bottom:.8rem;}
+.cfb-row{display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:.8rem;color:rgba(245,240,232,0.7);}
+.cfb-row:last-child{border-bottom:none;}
+.cfb-row.total{font-weight:600;color:var(--creme);font-size:.88rem;padding-top:.5rem;margin-top:.3rem;}
+.cfbv{font-family:'DM Mono',monospace;color:var(--or-clair);}
+
+.kpi-proj-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
+.kpi-proj{text-align:center;background:rgba(255,255,255,0.04);border:1px solid rgba(184,150,74,0.15);border-radius:3px;padding:1rem .5rem;}
+.kpi-proj-val{font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:var(--or-clair);}
+.kpi-proj-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(245,240,232,0.4);margin-top:.25rem;}
+
+/* TIMELINE CF */
+.cft{margin-top:1.5rem;}
+.cft-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,240,232,0.4);margin-bottom:.9rem;}
+.cft-bars{display:flex;align-items:flex-end;gap:4px;height:80px;}
+.cft-bar{flex:1;border-radius:2px 2px 0 0;min-height:4px;transition:opacity .2s;}
+.cft-bar:hover{opacity:.7;}
+.cft-labels{display:flex;gap:4px;margin-top:.3rem;}
+.cft-lbl{flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:8px;color:rgba(245,240,232,0.3);}
+
+.notebox{background:rgba(255,255,255,0.03);border:1px solid rgba(184,150,74,0.15);border-radius:3px;padding:.9rem 1.1rem;font-size:.75rem;color:rgba(245,240,232,0.5);margin-top:1rem;line-height:1.5;}
+
+/* ALERTES */
+.alert{border-radius:3px;padding:.9rem 1.1rem;margin-bottom:.7rem;display:flex;gap:.75rem;align-items:flex-start;font-size:.82rem;}
+.alert-rouge{background:rgba(192,57,43,0.05);border-left:3px solid var(--rouge);}
+.alert-orange{background:rgba(230,126,34,0.05);border-left:3px solid var(--orange);}
+.alert-vert{background:rgba(39,174,96,0.05);border-left:3px solid var(--vert-ok);}
+.alert-bleu{background:rgba(41,128,185,0.05);border-left:3px solid var(--bleu);}
+.alert-ico{flex-shrink:0;font-size:.95rem;margin-top:.05rem;}
+.alert-title{font-weight:600;margin-bottom:.2rem;font-size:.83rem;}
+.alert-body{color:var(--texte-doux);line-height:1.5;}
+
+/* TABLE BAIL */
+.bail-table{width:100%;border-collapse:collapse;font-size:.81rem;}
+.bail-table th{text-align:left;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--pierre);padding:.55rem .7rem;background:rgba(184,150,74,0.05);border-bottom:1px solid var(--sep);}
+.bail-table td{padding:.55rem .7rem;border-bottom:1px solid rgba(0,0,0,0.04);}
+.bail-table tr:last-child td{border-bottom:none;}
+.bail-table tr:hover td{background:rgba(184,150,74,0.03);}
+.mono{font-family:'DM Mono',monospace;}
+.c-rouge{color:var(--rouge);}
+.c-orange{color:var(--orange);}
+.c-vert{color:var(--vert-ok);}
+
+#map{height:240px;border-radius:3px;border:1px solid var(--sep);}
+
+.tl{padding-left:1.4rem;position:relative;}
+.tl::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--sep);}
+.tl-item{position:relative;margin-bottom:1.1rem;font-size:.82rem;}
+.tl-item::before{content:'';position:absolute;left:-1.6rem;top:.35rem;width:7px;height:7px;border-radius:50%;background:var(--or);border:2px solid var(--fond);}
+.tl-date{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--pierre);margin-bottom:.1rem;}
+.tl-prix{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--or);}
+
+.bar-row{margin-bottom:1rem;}
+.bar-hd{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.3rem;}
+.bar-hd-mono{font-family:'DM Mono',monospace;}
+.bar-bg{background:rgba(0,0,0,0.07);border-radius:2px;height:7px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:2px;}
+
+.info-card{background:var(--blanc);border:1px solid var(--sep);border-radius:3px;padding:1.2rem;}
+.info-card-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--pierre);margin-bottom:.5rem;}
+
+.synth-card{background:var(--blanc);border:1px solid var(--sep);border-top:3px solid var(--or);border-radius:3px;padding:1.3rem;}
+.synth-card.rouge{border-top-color:var(--rouge);}
+.synth-card.orange{border-top-color:var(--orange);}
+.synth-card.vert{border-top-color:var(--vert-ok);}
+.synth-card .label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--pierre);margin-bottom:.7rem;}
+.synth-card ul{list-style:none;font-size:.8rem;line-height:1.9;}
+
+.doc-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--fond);border:1px solid var(--sep);border-radius:3px;padding:.45rem .9rem;font-size:.78rem;color:var(--texte);text-decoration:none;margin:.3rem .3rem .3rem 0;}
+.doc-btn:hover{background:rgba(184,150,74,0.1);border-color:var(--or);}
+
+.footer{background:var(--noir);color:rgba(245,240,232,0.3);padding:1.3rem 2rem;font-family:'DM Mono',monospace;font-size:.7rem;text-align:center;margin-top:3rem;}
+
+@media(max-width:680px){
+  .hero-kpis,.kpi-proj-grid{grid-template-columns:1fr 1fr;}
+  .grid2,.grid3{grid-template-columns:1fr;}
+  .sim-results{grid-template-columns:1fr 1fr;}
+  .hero-title{font-size:2rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-label">Opportunit&eacute; 3 &middot; Murs Commerciaux &middot; Perpignan 66000</div>
+    <div class="hero-title"><em>Mabuhay Cuisine</em></div>
+    <div class="hero-adresse">5 Place Andr&eacute; Gr&eacute;try &mdash; Hypercentre pi&eacute;ton de Perpignan</div>
+    <div class="hero-kpis">
+      <div class="kpi"><div class="kpi-val">219 384 &euro;</div><div class="kpi-label">Prix affich&eacute;</div></div>
+      <div class="kpi"><div class="kpi-val">18 000 &euro;</div><div class="kpi-label">Loyer HT/an</div></div>
+      <div class="kpi"><div class="kpi-val">121 m&sup2;</div><div class="kpi-label">Surface</div></div>
+      <div class="kpi"><div class="kpi-val">8,2 %</div><div class="kpi-label">Rendement brut affich&eacute;</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- 01 SIMULATEUR -->
+  <div class="section">
+    <div class="section-hd"><span class="section-num">01</span><span class="section-title">Simulateur de rendement</span></div>
+    <div class="sim-card">
+      <div class="sim-row">
+        <span class="sim-row-label">N&eacute;gociation prix</span>
+        <input type="range" id="sl" min="-30" max="0" value="-23" step="1">
+        <span class="sim-row-val" id="sl-val">-23 %</span>
+      </div>
+      <div class="sim-prix-line">Prix cible&nbsp;: <span id="prix-cible">168 726 &euro;</span> &mdash; soit <span id="prix-m2">1 395 &euro;/m&sup2;</span></div>
+      <div style="font-size:.76rem;color:var(--pierre);text-align:center;margin-bottom:.5rem;">Charges annuelles d&eacute;ductibles&nbsp;: foncier 1 400 &euro; + copro 960 &euro; = 2 360 &euro;/an</div>
+      <div class="sim-results">
+        <div class="sim-res"><div class="sim-res-val" id="r-brut">10,67 %</div><div class="sim-res-label">Rendement brut</div></div>
+        <div class="sim-res"><div class="sim-res-val" id="r-net">9,27 %</div><div class="sim-res-label">Rendement net</div></div>
+        <div class="sim-res"><div class="sim-res-val" id="r-eco">50 658 &euro;</div><div class="sim-res-label">&Eacute;conomie vs affich&eacute;</div></div>
+        <div class="sim-res"><div class="sim-res-val" id="r-revnet">15 640 &euro;</div><div class="sim-res-label">Revenu net/an</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 PROJECTIONS FINANCIERES -->
+  <div class="section">
+    <div class="section-hd"><span class="section-num">02</span><span class="section-title">Projections financi&egrave;res &mdash; 15 ans</span></div>
+    <div class="proj-dark">
+
+      <div class="sim-row" style="margin-bottom:1rem;">
+        <span class="sim-row-label" style="color:rgba(245,240,232,0.5);">Taux cr&eacute;dit</span>
+        <input type="range" id="sl-taux" min="2" max="6" value="3.5" step="0.1" style="flex:1;accent-color:#b8964a;">
+        <span class="sim-row-val" id="v-taux" style="color:#d4af6a;">3,5 %</span>
+      </div>
+      <div class="sim-row" style="margin-bottom:1.5rem;">
+        <span class="sim-row-label" style="color:rgba(245,240,232,0.5);">Dur&eacute;e cr&eacute;dit</span>
+        <input type="range" id="sl-duree" min="10" max="20" value="15" step="1" style="flex:1;accent-color:#b8964a;">
+        <span class="sim-row-val" id="v-duree" style="color:#d4af6a;">15 ans</span>
+      </div>
+
+      <div class="kpi-proj-grid">
+        <div class="kpi-proj"><div class="kpi-proj-val" id="p-tri">—</div><div class="kpi-proj-label">TRI 15 ans</div></div>
+        <div class="kpi-proj"><div class="kpi-proj-val" id="p-roce">—</div><div class="kpi-proj-label">ROCE an 1</div></div>
+        <div class="kpi-proj"><div class="kpi-proj-val" id="p-cf">—</div><div class="kpi-proj-label">Cash Flow an 1</div></div>
+        <div class="kpi-proj"><div class="kpi-proj-val" id="p-cftot">—</div><div class="kpi-proj-label">CF cumul&eacute; 15 ans</div></div>
+      </div>
+
+      <div class="cfb-block">
+        <div class="cfb-label">D&eacute;tail Cash Flow annuel (an 1)</div>
+        <div class="cfb-row"><span>Loyer HT annuel</span><span class="cfbv" id="cf-loyer">—</span></div>
+        <div class="cfb-row"><span>Mensualit&eacute; cr&eacute;dit (x12)</span><span class="cfbv" id="cf-credit" style="color:#e87e7e;">—</span></div>
+        <div class="cfb-row"><span>Charges copropri&eacute;t&eacute;</span><span class="cfbv" style="color:#e87e7e;">- 960 &euro;</span></div>
+        <div class="cfb-row"><span>Taxe fonci&egrave;re</span><span class="cfbv" style="color:#4dab7a;">0 &euro; (refactur&eacute;e au preneur)</span></div>
+        <div class="cfb-row total"><span>Cash Flow annuel net</span><span class="cfbv" id="cf-total">—</span></div>
+        <div class="cfb-row"><span>CF cumul&eacute; 15 ans</span><span class="cfbv" id="cf-cum">—</span></div>
+        <div class="cfb-row"><span>Apport (frais notaire ~8 %)</span><span class="cfbv" id="cf-apport">—</span></div>
+        <div class="cfb-row"><span>Valeur r&eacute;siduelle an 15</span><span class="cfbv" id="cf-vr">—</span></div>
+      </div>
+
+      <div class="cft">
+        <div class="cft-title">&Eacute;volution du Cash Flow annuel sur 15 ans &mdash; croissance loyers +1,5 %/an (ILC triennale)</div>
+        <div class="cft-bars" id="cf-bars"></div>
+        <div class="cft-labels" id="cf-labels"></div>
+      </div>
+
+      <div class="notebox">
+        &#9888; Hypoth&egrave;ses prudentes &middot; TRI et CF calcul&eacute;s sur flux nets apr&egrave;s service de la dette et charges. ROCE = r&eacute;sultat net an 1 / apport total (frais notaire inclus). Le TRI int&egrave;gre la valeur r&eacute;siduelle &agrave; an 15 (prix n&eacute;goci&eacute; &times; 1,01^15) nette du capital restant d&ucirc; du cr&eacute;dit. Taxe fonci&egrave;re refactur&eacute;e au preneur (Art. 5 du bail).
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 BAIL -->
+  <div class="section">
+    <div class="section-hd"><span class="section-num">03</span><span class="section-title">Bail commercial</span></div>
+    <table class="bail-table">
+      <tr><th>Param&egrave;tre</th><th>Valeur</th><th>Observation</th></tr>
+      <tr><td>Bailleur</td><td class="mono">SCI Aliet (Julie Aliet)</td><td>5 Rue du Four-Saint-Jean, 66000 Perpignan</td></tr>
+      <tr><td>Preneur</td><td class="mono">SAS Mabuhay Cuisine</td><td>Maria Theresa Lindblom, Pr&eacute;sidente</td></tr>
+      <tr><td>Prise d&rsquo;effet</td><td class="mono">05/05/2025</td><td>Bail tr&egrave;s r&eacute;cent &mdash; 14 mois au moment de l&rsquo;analyse</td></tr>
+      <tr><td>Dur&eacute;e</td><td class="mono">9 ans (3-6-9)</td><td>Fin mai 2034 &mdash; 1&egrave;re sortie preneur mai 2028</td></tr>
+      <tr><td>Loyer annuel HT HC</td><td class="mono">18 000 &euro;</td><td>1 500 &euro;/mois, payable le 1er du mois d&rsquo;avance</td></tr>
+      <tr><td>Indexation</td><td class="mono c-orange">ILC triennale</td><td>R&eacute;vision tous les 3 ans &mdash; prochaine mai 2028</td></tr>
+      <tr><td>D&eacute;p&ocirc;t de garantie</td><td class="mono c-orange">1 500 &euro; (1 mois)</td><td>Minimal &mdash; standard bas</td></tr>
+      <tr><td>Destination</td><td class="mono">Restauration exclusive</td><td>Toute adjonction requiert accord &eacute;crit bailleur</td></tr>
+      <tr><td>Bail notari&eacute;</td><td class="mono c-rouge">NON</td><td>Sous seing priv&eacute; &mdash; pas de titre ex&eacute;cutoire direct</td></tr>
+      <tr><td>Clause r&eacute;solutoire</td><td class="mono c-vert">OUI (Art. 10)</td><td>R&eacute;siliation de plein droit 1 mois apr&egrave;s commandement</td></tr>
+      <tr><td>Cession / sous-location</td><td class="mono c-orange">Restreinte</td><td>Agr&eacute;ment &eacute;crit bailleur &mdash; c&eacute;dant garant solidaire 3 ans</td></tr>
+      <tr><td>Lots copropri&eacute;t&eacute;</td><td class="mono">N&deg; 8, 9, 10</td><td>RdC &mdash; 72 m&sup2; magasin + 44 m&sup2; magasin cave + 17 m&sup2; bureaux</td></tr>
+      <tr><td>Immatriculation SAS</td><td class="mono c-rouge">En cours &agrave; la signature</td><td>V&eacute;rifier SIREN actif + Kbis &agrave; jour</td></tr>
+      <tr><td>Loyers &agrave; jour</td><td class="mono c-vert">Confirm&eacute;</td><td>Attestation agent &mdash; r&eacute;gularit&eacute; des paiements</td></tr>
+    </table>
+  </div>
+
+  <!-- 04 POINTS D'ATTENTION -->
+  <div class="section">
+    <div class="section-hd"><span class="section-num">04</span><span class="section-title">Points d&rsquo;attention investisseur</span></div>
+
+    <div class="alert alert-rouge">
+      <div class="alert-ico">&#9888;</div>
+      <div><div class="alert-title">Revente rapide : valorisation forc&eacute;e par le rendement</div>
+      <div class="alert-body">Acquis le 30/06/2025 &agrave; <strong>155 800 &euro;</strong>, remis en vente 10 mois plus tard &agrave; <strong>219 384 &euro;</strong> (+<strong>40,8 %</strong>). L&rsquo;ancien propri&eacute;taire d&eacute;tenait murs ET fonds. Le bail a &eacute;t&eacute; cr&eacute;&eacute; concomitamment &agrave; la cession des murs pour g&eacute;n&eacute;rer une valorisation par le rendement. Aucun droit au bail vers&eacute; connu.</div></div>
+    </div>
+
+    <div class="alert alert-rouge">
+      <div class="alert-ico">&#9888;</div>
+      <div><div class="alert-title">SAS en cours d&rsquo;immatriculation &agrave; la signature du bail</div>
+      <div class="alert-body">La SAS Mabuhay Cuisine &eacute;tait <em>en cours d&rsquo;immatriculation</em> au RCS lors de la signature (05/05/2025). V&eacute;rifier que le SIREN est aujourd&rsquo;hui actif et que le bail a &eacute;t&eacute; confirm&eacute; post-immatriculation.</div></div>
+    </div>
+
+    <div class="alert alert-orange">
+      <div class="alert-ico">&#9889;</div>
+      <div><div class="alert-title">Bail non notari&eacute; &mdash; force probante limit&eacute;e</div>
+      <div class="alert-body">Sous seing priv&eacute;, pas de titre ex&eacute;cutoire. En cas d&rsquo;impay&eacute;s, proc&eacute;dure judiciaire m&ecirc;me avec clause r&eacute;solutoire. L&rsquo;Art. 10 att&eacute;nue mais n&rsquo;&eacute;limine pas le risque.</div></div>
+    </div>
+
+    <div class="alert alert-orange">
+      <div class="alert-ico">&#9889;</div>
+      <div><div class="alert-title">Extraction : conformit&eacute; non attest&eacute;e officiellement</div>
+      <div class="alert-body">Diam&egrave;tre 30 cm confirm&eacute;, dernier entretien hotte transmis (mai 2026). Aucune attestation officielle de conformit&eacute; copropri&eacute;t&eacute;/urbanisme. Condition critique d&rsquo;exploitation restaurant. Exiger avant offre ferme.</div></div>
+    </div>
+
+    <div class="alert alert-orange">
+      <div class="alert-ico">&#9889;</div>
+      <div><div class="alert-title">Indexation ILC triennale uniquement</div>
+      <div class="alert-body">R&eacute;vision tous les 3 ans. Loyer gel&eacute; entre deux &eacute;ch&eacute;ances. Prochaine r&eacute;vision mai 2028. ILC +15 % cumul&eacute; sur 2020&ndash;2025 &mdash; m&eacute;canisme acceptable sur ce type d&rsquo;actif.</div></div>
+    </div>
+
+    <div class="alert alert-bleu">
+      <div class="alert-ico">&#9432;</div>
+      <div><div class="alert-title">Copropri&eacute;t&eacute; petite taille &mdash; syndic professionnel</div>
+      <div class="alert-body">6 lots, 5 propri&eacute;taires, syndic Atrium Immobilier. Charges ma&icirc;tris&eacute;es (80 &euro;/mois). Aucun programme de travaux connu. Demander les 3 derniers PV d&rsquo;AG.</div></div>
+    </div>
+
+    <div class="alert alert-vert">
+      <div class="alert-ico">&#10003;</div>
+      <div><div class="alert-title">Locataire reconnu, exploitation active, terrasse</div>
+      <div class="alert-body">Restaurant visible, terrasse active sur place pi&eacute;tonne. Loyers &agrave; jour confirm&eacute;s. Place Andr&eacute; Gr&eacute;try : hypercentre Perpignan &agrave; forte animation. Signaux d&rsquo;exploitation favorables.</div></div>
+    </div>
+
+    <div class="alert alert-vert">
+      <div class="alert-ico">&#10003;</div>
+      <div><div class="alert-title">Clause r&eacute;solutoire solide + cession encadr&eacute;e</div>
+      <div class="alert-body">Art. 10 : r&eacute;siliation de plein droit 1 mois apr&egrave;s commandement, +10 % sur impay&eacute;s. Cession avec agr&eacute;ment &eacute;crit, c&eacute;dant garant solidaire 3 ans. Protection bailleur efficace.</div></div>
+    </div>
+  </div>
+
+  <!-- 05 HISTORIQUE + MARCHE -->
+  <div class="section">
+    <div class="section-hd"><span class="section-num">05</span><span class="section-title">Historique de prix &amp; contexte march&eacute;</span></div>
+    <div class="grid2">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--pierre);margin-bottom:1rem;">Chronologie du bien</div>
+        <div class="tl">
+          <div class="tl-item"><div class="tl-date">AVANT MAI 2025</div><div>Anciens propri&eacute;taires : murs + fonds de commerce. Aucun bail s&eacute;par&eacute;.</div></div>
+          <div class="tl-item"><div class="tl-date">05 MAI 2025</div><div>Cr&eacute;ation bail SAS Mabuhay Cuisine &mdash; <span class="tl-prix">18 000 &euro; HT/an</span></div></div>
+          <div class="tl-item"><div class="tl-date">30 JUIN 2025</div><div>Acquisition SCI Aliet &mdash; <span class="tl-prix">155 800 &euro;</span> &mdash; 1 287 &euro;/m&sup2;</div></div>
+          <div class="tl-item"><div class="tl-date">AVRIL 2026</div><div>Mise en vente &mdash; <span class="tl-prix">219 384 &euro;</span> &mdash; +40,8 % en 10 mois</div></div>
+          <div class="tl-item"><div class="tl-date">OFFRE EN COURS</div><div>166 200 &euro; &mdash; r&eacute;ponse vendeur 15 jours<br><strong>Position Thomas : 168 000 &euro;</strong></div></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--pierre);margin-bottom:1rem;">Comparatif prix au m&sup2;</div>
+        <div class="bar-row">
+          <div class="bar-hd"><span>Prix affich&eacute; (219 384 &euro;)</span><span class="bar-hd-mono c-rouge">1 813 &euro;/m&sup2;</span></div>
+          <div class="bar-bg"><div class="bar-fill" style="width:100%;background:var(--rouge);"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-hd"><span>Achat SCI Aliet (juil. 2025)</span><span class="bar-hd-mono">1 287 &euro;/m&sup2;</span></div>
+          <div class="bar-bg"><div class="bar-fill" style="width:71%;background:var(--or);"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-hd"><span>Offre concurrente (166 200 &euro;)</span><span class="bar-hd-mono c-orange">1 373 &euro;/m&sup2;</span></div>
+          <div class="bar-bg"><div class="bar-fill" style="width:76%;background:var(--orange);"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-hd"><span>Position Thomas (168 000 &euro;)</span><span class="bar-hd-mono c-vert">1 388 &euro;/m&sup2;</span></div>
+          <div class="bar-bg"><div class="bar-fill" style="width:77%;background:var(--vert-ok);"></div></div>
+        </div>
+        <div style="margin-top:1.2rem;padding:.9rem;background:rgba(184,150,74,0.06);border:1px solid var(--sep);border-radius:3px;font-size:.78rem;color:var(--texte-doux);line-height:1.5;">
+          <strong style="color:var(--texte);">Lecture rendement :</strong> SCI Aliet encaissait 11,6 % brut &agrave; 155 800 &euro;. &Agrave; 219 384 &euro;, rendement comprim&eacute; &agrave; 8,2 %. &Agrave; 168 000 &euro;, remonte &agrave; 10,7 % &mdash; l&rsquo;acheteur ne finance pas la plus-value du vendeur.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 06 EMPLACEMENT -->
+  <div class="section">
+    <div class="section-hd"><span class="section-num">06</span><span class="section-title">Emplacement</span></div>
+    <div class="grid2">
+      <div>
+        <div id="map"></div>
+        <div style="margin-top:.5rem;font-size:.72rem;color:var(--pierre);text-align:center;">
+          <a href="https://www.google.com/maps/place/5+Pl.+Andr%C3%A9+Gr%C3%A9try,+66000+Perpignan" target="_blank" style="color:var(--or);text-decoration:none;">Ouvrir dans Google Maps &rarr;</a>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="info-card">
+          <div class="info-card-label">Zone &amp; trafic</div>
+          <div style="font-size:.82rem;line-height:1.7;">Hypercentre pi&eacute;ton de Perpignan. Place anim&eacute;e, forte fr&eacute;quentation touristique et de proximit&eacute;. Secteur restauration dense.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Atouts</div>
+          <div style="font-size:.82rem;line-height:1.9;">&#10003; Secteur pi&eacute;ton central<br>&#10003; Terrasse sur voie publique<br>&#10003; Proximit&eacute; Castillet &amp; Place de la R&eacute;publique<br>&#10003; Faible vacance commerciale hypercentre<br>&#10003; Visible Google Maps, client&egrave;le &eacute;tablie</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Lots (EDD 2000)</div>
+          <div style="font-size:.82rem;line-height:1.6;"><strong>Lot 8</strong> &mdash; Local bureaux/hall 17 m&sup2;<br><strong>Lot 9</strong> &mdash; Magasin + cave + cuisine + WC + escalier 44,88 m&sup2;<br><strong>Lot 10</strong> &mdash; Local magasin 72,12 m&sup2;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 07 SYNTHESE -->
+  <div class="section">
+    <div class="section-hd"><span class="section-num">07</span><span class="section-title">Synth&egrave;se d&eacute;cisionnelle</span></div>
+    <div class="grid3">
+      <div class="synth-card vert">
+        <div class="label">Points forts</div>
+        <ul>
+          <li>&#10003; Rendement brut ~10,7 % &agrave; 168k&euro;</li>
+          <li>&#10003; Bail 9 ans r&eacute;cent</li>
+          <li>&#10003; Loyers &agrave; jour, restaurant actif</li>
+          <li>&#10003; Clause r&eacute;solutoire solide</li>
+          <li>&#10003; Hypercentre, terrasse, pi&eacute;ton</li>
+          <li>&#10003; Petite copro, syndic pro</li>
+          <li>&#10003; Foncier refactur&eacute; au preneur</li>
+        </ul>
+      </div>
+      <div class="synth-card orange">
+        <div class="label">Vigilance</div>
+        <ul>
+          <li>&#9889; Bail non notari&eacute;</li>
+          <li>&#9889; Indexation triennale uniquement</li>
+          <li>&#9889; Extraction : pas d&rsquo;attestation</li>
+          <li>&#9889; Comptes SAS non transmis</li>
+          <li>&#9889; PV AG copro &agrave; demander</li>
+          <li>&#9889; D&eacute;p&ocirc;t de garantie minimal</li>
+        </ul>
+      </div>
+      <div class="synth-card rouge">
+        <div class="label">Alertes</div>
+        <ul>
+          <li>&#9888; +40,8 % en 10 mois</li>
+          <li>&#9888; SAS en cours d&rsquo;immat. &agrave; la signature</li>
+          <li>&#9888; Droit au bail : inconnu</li>
+          <li>&#9888; Prix affich&eacute; = PV vendeur &agrave; financer</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:1.5rem;padding:1.2rem 1.5rem;background:rgba(184,150,74,0.06);border:1px solid var(--sep);border-radius:3px;font-size:.83rem;line-height:1.6;">
+      <strong>Recommandation &agrave; 168 000 &euro; :</strong> Rendement brut 10,7 % en hypercentre Perpignan sur bail 9 ans r&eacute;cent est attractif. R&eacute;serve principale : s&eacute;quence murs/fonds cr&eacute;&eacute;e pour valorisation (+40 % en 10 mois). Avant offre ferme : (1) SIREN SAS actif, (2) attestation conformit&eacute; extraction, (3) 3 PV AG copro, (4) confirmation absence de droit au bail vers&eacute;.
+    </div>
+  </div>
+
+  <!-- 08 DOCUMENTS -->
+  <div class="section">
+    <div class="section-hd"><span class="section-num">08</span><span class="section-title">Documents</span></div>
+    <div>
+      <a class="doc-btn" href="https://drive.google.com/drive/folders/13SwNj_4RRgAOyaHzqgT8fekhxA88lL4k?usp=sharing" target="_blank">&#128193; Dossier complet &mdash; Google Drive</a>
+    </div>
+    <div style="margin-top:.9rem;padding:.8rem 1rem;background:rgba(192,57,43,0.04);border-left:3px solid var(--rouge);border-radius:2px;font-size:.78rem;color:var(--texte-doux);">
+      <strong style="color:var(--texte);">Documents manquants &agrave; exiger :</strong> Attestation conformit&eacute; extraction &middot; PV AG copro (3 derni&egrave;res ann&eacute;es) &middot; Relev&eacute; paiements loyers &middot; Comptes SAS Mabuhay Cuisine &middot; Kbis actif
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Analyse confidentielle &mdash; usage investisseur &middot; Transaction Commerce 66 (R&eacute;f. 950) &middot; Juin 2026
+</div>
+
+<script>
+window.addEventListener('load', function() {
+
+  // LEAFLET
+  try {
+    var map = L.map('map').setView([42.6974, 2.8948], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
+    L.marker([42.6974, 2.8948]).addTo(map).bindPopup('<strong>Mabuhay Cuisine</strong><br>5 Place Andr\u00e9 Gr\u00e9try').openPopup();
+  } catch(e){}
+
+  var LOYER0 = 18000;
+  var CHARGES = 960; // copro seule, foncier refactur\u00e9
+  var AFFICHE = 219384;
+  var SURFACE = 121;
+  var FRAIS_NOTAIRE = 0.08;
+  var CROISSANCE_LOYER = 0.015;
+
+  function fr(n){ return Math.round(n).toLocaleString('fr-FR') + '\u00a0\u20ac'; }
+  function pct(n){ return n.toFixed(2) + '\u00a0%'; }
+
+  function mensualite(capital, tauxAnnuel, dureeAns){
+    var r = tauxAnnuel / 12;
+    var n = dureeAns * 12;
+    if(r === 0) return capital / n;
+    return capital * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1);
+  }
+
+  function capitalRestantDu(capital, tauxAnnuel, dureeAns, annee){
+    var r = tauxAnnuel / 12;
+    var n = dureeAns * 12;
+    var k = annee * 12;
+    if(r === 0) return capital * (1 - k/n);
+    return capital * (Math.pow(1+r,n) - Math.pow(1+r,k)) / (Math.pow(1+r,n) - 1);
+  }
+
+  function calcTRI(flux, nAns){
+    // Newton-Raphson
+    var r = 0.08;
+    for(var iter=0; iter<100; iter++){
+      var f=0, df=0;
+      for(var t=0; t<=nAns; t++){
+        f  += flux[t] / Math.pow(1+r, t);
+        df -= t * flux[t] / Math.pow(1+r, t+1);
+      }
+      if(Math.abs(df) < 1e-12) break;
+      var rn = r - f/df;
+      if(Math.abs(rn-r) < 1e-8){ r=rn; break; }
+      r = rn;
+    }
+    return r;
+  }
+
+  function update(){
+    var pctNego = parseInt(document.getElementById('sl').value);
+    document.getElementById('sl-val').textContent = pctNego + '\u00a0%';
+    var prix = Math.round(AFFICHE * (1 + pctNego/100));
+    var m2 = Math.round(prix / SURFACE);
+    var brut = (LOYER0/prix)*100;
+    var net = ((LOYER0-CHARGES-1400)/prix)*100; // 1400 foncier non refactur\u00e9 en charges d\u00e9ductibles
+    var eco = AFFICHE - prix;
+    document.getElementById('prix-cible').textContent = fr(prix);
+    document.getElementById('prix-m2').textContent = m2.toLocaleString('fr-FR') + '\u00a0\u20ac/m\u00b2';
+    document.getElementById('r-brut').textContent = pct(brut);
+    document.getElementById('r-net').textContent = pct(net);
+    document.getElementById('r-eco').textContent = fr(eco);
+    document.getElementById('r-revnet').textContent = fr(LOYER0 - CHARGES - 1400);
+
+    var taux = parseFloat(document.getElementById('sl-taux').value) / 100;
+    var duree = parseInt(document.getElementById('sl-duree').value);
+    document.getElementById('v-taux').textContent = (taux*100).toFixed(1).replace('.',',') + '\u00a0%';
+    document.getElementById('v-duree').textContent = duree + '\u00a0ans';
+
+    var apport = Math.round(prix * FRAIS_NOTAIRE);
+    var credit = prix;
+    var mens = mensualite(credit, taux, duree);
+    var annuiteCredit = mens * 12;
+
+    // CF an 1
+    var cf1 = LOYER0 - annuiteCredit - CHARGES;
+    document.getElementById('cf-loyer').textContent = fr(LOYER0);
+    document.getElementById('cf-credit').textContent = '- ' + fr(annuiteCredit);
+    document.getElementById('cf-total').textContent = fr(cf1);
+    document.getElementById('cf-apport').textContent = fr(apport);
+
+    // ROCE
+    var roce = (cf1 / apport) * 100;
+    document.getElementById('p-roce').textContent = pct(roce);
+    document.getElementById('p-cf').textContent = fr(cf1);
+
+    // 15 ans CF
+    var cfs = [];
+    var loyer = LOYER0;
+    var cfCum = 0;
+    for(var an=1; an<=15; an++){
+      if(an > 1 && (an-1) % 3 === 0) loyer = loyer * (1 + CROISSANCE_LOYER * 3);
+      var cfAn = loyer - annuiteCredit - CHARGES;
+      cfs.push(cfAn);
+      cfCum += cfAn;
+    }
+    document.getElementById('cf-cum').textContent = fr(cfCum);
+    document.getElementById('p-cftot').textContent = fr(cfCum);
+
+    // Valeur r\u00e9siduelle an 15
+    var vr15 = prix * Math.pow(1.01, 15);
+    var crd15 = capitalRestantDu(credit, taux, duree, Math.min(15, duree));
+    var vrNet = vr15 - crd15;
+    document.getElementById('cf-vr').textContent = fr(vrNet);
+
+    // TRI
+    var flux = [-apport];
+    for(var i=0; i<15; i++) flux.push(cfs[i]);
+    flux[15] += vrNet;
+    var tri = calcTRI(flux, 15);
+    document.getElementById('p-tri').textContent = pct(tri*100);
+
+    // Timeline bars
+    var barsEl = document.getElementById('cf-bars');
+    var lblsEl = document.getElementById('cf-labels');
+    barsEl.innerHTML = '';
+    lblsEl.innerHTML = '';
+    var maxCF = Math.max.apply(null, cfs.map(Math.abs));
+    for(var j=0; j<cfs.length; j++){
+      var h = Math.max(4, Math.round(80 * Math.abs(cfs[j]) / maxCF));
+      var col = cfs[j] >= 0 ? '#b8964a' : '#c0392b';
+      var bar = document.createElement('div');
+      bar.className = 'cft-bar';
+      bar.style.height = h + 'px';
+      bar.style.background = col;
+      bar.title = 'An ' + (j+1) + '\u00a0: ' + fr(cfs[j]);
+      barsEl.appendChild(bar);
+      var lbl = document.createElement('div');
+      lbl.className = 'cft-lbl';
+      lbl.textContent = 'A' + (j+1);
+      lblsEl.appendChild(lbl);
+    }
+  }
+
+  document.getElementById('sl').addEventListener('input', update);
+  document.getElementById('sl-taux').addEventListener('input', update);
+  document.getElementById('sl-duree').addEventListener('input', update);
+  update();
+});
+</script>
+</body>
+</html>
